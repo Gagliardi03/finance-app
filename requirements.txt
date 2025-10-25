@@ -1,0 +1,12 @@
+# Core dependencies
+streamlit>=1.32.0
+pandas>=2.2.0
+numpy>=1.26.0
+
+# Data visualization
+plotly>=5.19.0
+
+# Excel support
+openpyxl>=3.1.2
+
+# Note: sqlite3, dataclasses, and typing are built-in
