@@ -179,6 +179,12 @@ class ExpenseService:
         except Exception as e:
             raise Exception(f"Error clearing expenses: {e}")
 
+    def delete_all_expenses(self) -> bool:
+        """
+        Alias para clear_all_expenses, para compatibilidade com frontend.
+        """
+        return self.clear_all_expenses()
+
     def get_expenses_by_payment_method(self) -> Dict[str, float]:
         """
         Get total spending grouped by payment method.

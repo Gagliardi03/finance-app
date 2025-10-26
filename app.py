@@ -83,34 +83,21 @@ def show_sidebar(expense_service: ExpenseService, class_service: ClassService):
 
         st.markdown("#### 💸 Finances")
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("💰 Add", use_container_width=True, key="nav_add_expense"):
-                st.session_state.page = "expenses"
-                st.rerun()
-
-        with col2:
-            if st.button("📊 Track", use_container_width=True, key="nav_track"):
-                st.session_state.page = "expenses"
-                st.rerun()
+        # Finance Add button - full width
+        if st.button("💰 Add Expense", use_container_width=True, key="nav_add_expense"):
+            st.session_state.page = "expenses"
+            st.rerun()
 
         st.markdown("#### 🎓 Classes")
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("📚 Add", use_container_width=True, key="nav_add_class"):
-                st.session_state.page = "classes"
-                st.rerun()
-
-        with col2:
-            if st.button("👥 View", use_container_width=True, key="nav_view_classes"):
-                st.session_state.page = "classes"
-                st.rerun()
+        # Classes Add button - full width
+        if st.button("📚 Add Class", use_container_width=True, key="nav_add_class"):
+            st.session_state.page = "classes"
+            st.rerun()
 
         st.markdown("#### 📈 Analytics")
 
+        # Analytics button - full width
         if st.button(
             "📊 View Analytics", use_container_width=True, key="nav_analytics"
         ):
@@ -127,43 +114,37 @@ def show_sidebar(expense_service: ExpenseService, class_service: ClassService):
             st.markdown("### 📊 Quick Stats")
 
             # Expenses
-            st.markdown(
-                f"""
+            expenses_html = f"""
                 <div style='background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;'>
                     <p style='color: white; font-size: 0.75rem; margin: 0;'>Total Expenses</p>
                     <p style='color: white; font-size: 1.25rem; font-weight: 700; margin: 0;'>
                         {expense_stats.total_expenses}
                     </p>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            """
+            st.markdown(expenses_html, unsafe_allow_html=True)
 
             # Spent
-            st.markdown(
-                f"""
+            spent_html = f"""
                 <div style='background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;'>
                     <p style='color: white; font-size: 0.75rem; margin: 0;'>Total Spent</p>
                     <p style='color: white; font-size: 1.25rem; font-weight: 700; margin: 0;'>
                         R$ {expense_stats.total_spent:,.2f}
                     </p>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            """
+            st.markdown(spent_html, unsafe_allow_html=True)
 
             # Revenue
-            st.markdown(
-                f"""
+            revenue_html = f"""
                 <div style='background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;'>
                     <p style='color: white; font-size: 0.75rem; margin: 0;'>Class Revenue</p>
                     <p style='color: white; font-size: 1.25rem; font-weight: 700; margin: 0;'>
                         R$ {class_stats.total_revenue:,.2f}
                     </p>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            """
+            st.markdown(revenue_html, unsafe_allow_html=True)
 
             # Balance
             balance = class_stats.total_revenue - expense_stats.total_spent
@@ -171,17 +152,15 @@ def show_sidebar(expense_service: ExpenseService, class_service: ClassService):
                 "rgba(16, 124, 16, 0.3)" if balance >= 0 else "rgba(209, 52, 56, 0.3)"
             )
 
-            st.markdown(
-                f"""
+            balance_html = f"""
                 <div style='background: {balance_color}; padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;'>
                     <p style='color: white; font-size: 0.75rem; margin: 0;'>Balance</p>
                     <p style='color: white; font-size: 1.25rem; font-weight: 700; margin: 0;'>
                         R$ {abs(balance):,.2f}
                     </p>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            """
+            st.markdown(balance_html, unsafe_allow_html=True)
 
         except Exception:
             pass  # Silently fail for stats
@@ -192,7 +171,7 @@ def show_sidebar(expense_service: ExpenseService, class_service: ClassService):
         st.markdown(
             """
             <p style='text-align: center; color: rgba(255,255,255,0.6); font-size: 0.75rem;'>
-                Made with ❤️ using Streamlit
+                © 2025 Personal Finance Manager
             </p>
             """,
             unsafe_allow_html=True,
@@ -207,7 +186,7 @@ def main():
     Main application function.
     Handles page routing and rendering.
     """
-    # Apply Fluent theme
+    # Apply permanent dark theme
     apply_fluent_theme()
 
     # Initialize session state for navigation
