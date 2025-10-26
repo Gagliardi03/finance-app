@@ -13,10 +13,10 @@ class Expense:
     id: Optional[int]  # ID from database
     date: str  # Transaction date
     category: str  # Expense category (e.g., "Pharmacy")
-    location: str  # Where expense occurred
     price: float  # Amount in BRL
     payment_method: str  # Payment type (e.g., "Credit Card")
-    installments: int = 1  # Number of installments
+    location: Optional[str] = None  # Where expense occurred
+    installments: Optional[int] = None  # Number of installments
 
 
 @dataclass

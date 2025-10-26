@@ -46,7 +46,9 @@ def show_expenses_page(expense_service: ExpenseService):
             st.rerun()
     with col2:
         analytics_label = (
-            "📝 Add Expenses" if st.session_state.show_analytics else "📊 View Analytics"
+            "📝 Add Expenses"
+            if st.session_state.show_analytics
+            else "📊 View Analytics"
         )
         if st.button(analytics_label, use_container_width=True):
             st.session_state.show_analytics = not st.session_state.show_analytics
@@ -154,8 +156,8 @@ def _show_add_expenses_view(expense_service: ExpenseService):
         )
 
         if submitted:
-            # Validate inputs
-            if not category or not location:
+            # Validate inputs (location agora é opcional)
+            if not category:
                 st.error("❌ Please fill in all fields!")
             else:
                 # Add to temporary list
@@ -387,6 +389,30 @@ def _show_analytics_view(expense_service: ExpenseService):
         """,
         unsafe_allow_html=True,
     )
+
+    # Botão de exclusão total com confirmação
+    if "show_delete_dialog" not in st.session_state:
+        st.session_state.show_delete_dialog = False
+    if st.button("🗑️ Delete All Expenses", type="primary", use_container_width=True):
+        st.session_state.show_delete_dialog = True
+    if st.session_state.show_delete_dialog:
+        st.warning(
+            "Are you sure you want to delete ALL expenses? This action cannot be undone!"
+        )
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("❌ Cancel", key="cancel_delete_all_expenses"):
+                st.session_state.show_delete_dialog = False
+        with col2:
+            if st.button("✅ Confirm Delete", key="confirm_delete_all_expenses"):
+                try:
+                    expense_service.delete_all_expenses()
+                    st.success("All expenses deleted!")
+                    st.session_state.show_delete_dialog = False
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error deleting expenses: {e}")
+    # ...existing code...
 
     try:
         # Get data

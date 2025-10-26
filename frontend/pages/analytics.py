@@ -24,7 +24,7 @@ def show_analytics_page(expense_service: ExpenseService, class_service: ClassSer
     # Page header
     st.markdown(
         """
-        <div style="text-align: center; padding: 32px 24px; background: #ffffff; 
+        <div style="text-align: center; padding: 32px 24px; background: #1a1a1a; 
                     border-radius: 12px; box-shadow: 0 6.4px 14.4px rgba(0, 0, 0, 0.132); 
                     margin-bottom: 32px;">
             <h1 style="font-size: 32px; font-weight: 700; color: #242424; margin-bottom: 8px;">

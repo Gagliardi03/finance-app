@@ -349,6 +349,29 @@ def _show_analytics_view(class_service: ClassService):
         unsafe_allow_html=True,
     )
 
+    # Botão de exclusão total com confirmação
+    if "show_delete_dialog_classes" not in st.session_state:
+        st.session_state.show_delete_dialog_classes = False
+    if st.button("🗑️ Delete All Classes", type="primary", use_container_width=True):
+        st.session_state.show_delete_dialog_classes = True
+    if st.session_state.show_delete_dialog_classes:
+        st.warning(
+            "Are you sure you want to delete ALL classes? This action cannot be undone!"
+        )
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("❌ Cancel", key="cancel_delete_all_classes"):
+                st.session_state.show_delete_dialog_classes = False
+        with col2:
+            if st.button("✅ Confirm Delete", key="confirm_delete_all_classes"):
+                try:
+                    class_service.delete_all_classes()
+                    st.success("All classes deleted!")
+                    st.session_state.show_delete_dialog_classes = False
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error deleting classes: {e}")
+
     try:
         # Get data
         df_classes = class_service.get_all_classes()

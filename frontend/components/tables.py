@@ -24,25 +24,30 @@ def expense_table(
         with st.container():
             col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 1])
 
+
             with col1:
                 st.markdown(f"**📅 Date**")
-                st.text(row["date"][:10])
+                date_val = row["date"] if "date" in row and pd.notnull(row["date"]) else "-"
+                st.text(str(date_val)[:10] if date_val != "-" else "-")
 
             with col2:
                 st.markdown(f"**🏷️ Category**")
-                st.text(row["category"])
+                cat_val = row["category"] if "category" in row and pd.notnull(row["category"]) and row["category"] != "" else "-"
+                st.text(cat_val)
 
             with col3:
                 st.markdown(f"**📍 Location**")
-                st.text(row["location"])
+                st.text(row["location"] if "location" in row and row["location"] not in [None, "", "nan"] else "-")
 
             with col4:
                 st.markdown(f"**💵 Price**")
-                st.text(f"R$ {row['price']:,.2f}")
+                price_val = row["price"] if "price" in row and pd.notnull(row["price"]) else None
+                st.text(f"R$ {price_val:,.2f}" if price_val is not None else "-")
 
             with col5:
                 st.markdown(f"**💳 Payment**")
-                st.text(row["payment_method"])
+                pay_val = row["payment_method"] if "payment_method" in row and pd.notnull(row["payment_method"]) and row["payment_method"] != "" else "-"
+                st.text(pay_val)
 
             with col6:
                 if on_delete:
@@ -84,25 +89,31 @@ def class_table(
         with st.container():
             col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 1])
 
+
             with col1:
                 st.markdown(f"**📅 Date**")
-                st.text(row["date"][:10])
+                date_val = row["date"] if "date" in row and pd.notnull(row["date"]) else "-"
+                st.text(str(date_val)[:10] if date_val != "-" else "-")
 
             with col2:
                 st.markdown(f"**👨‍🎓 Student**")
-                st.text(row["student_name"])
+                student_val = row["student_name"] if "student_name" in row and pd.notnull(row["student_name"]) and row["student_name"] != "" else "-"
+                st.text(student_val)
 
             with col3:
                 st.markdown(f"**💵 Value**")
-                st.text(f"R$ {row['class_value']:,.2f}")
+                value_val = row["class_value"] if "class_value" in row and pd.notnull(row["class_value"]) else None
+                st.text(f"R$ {value_val:,.2f}" if value_val is not None else "-")
 
             with col4:
                 st.markdown(f"**📊 Quantity**")
-                st.text(f"{row['quantity']} classes")
+                qty_val = row["quantity"] if "quantity" in row and pd.notnull(row["quantity"]) else None
+                st.text(f"{qty_val} classes" if qty_val is not None else "0 classes")
 
             with col5:
                 st.markdown(f"**💰 Total**")
-                st.text(f"R$ {row['total']:,.2f}")
+                total_val = row["total"] if "total" in row and pd.notnull(row["total"]) else None
+                st.text(f"R$ {total_val:,.2f}" if total_val is not None else "-")
 
             with col6:
                 if on_delete:
@@ -160,19 +171,23 @@ def student_summary_table(df: pd.DataFrame) -> None:
         st.info("📭 No student data available")
         return
 
-    st.markdown("### 👨‍🎓 Student Revenue Summary")
+    st.markdown
 
     # Display as cards instead of table for better UX
     for idx, row in df.iterrows():
         with st.container():
             col1, col2, col3 = st.columns([3, 2, 2])
 
+            student_val = row["student_name"] if "student_name" in row and pd.notnull(row["student_name"]) and row["student_name"] != "" else "-"
+            total_classes_val = int(row["total_classes"]) if "total_classes" in row and pd.notnull(row["total_classes"]) else 0
+            total_revenue_val = row["total_revenue"] if "total_revenue" in row and pd.notnull(row["total_revenue"]) else 0
+
             with col1:
                 st.markdown(
                     f"""
                     <div class="fluent-card">
-                        <p style="color: #605e5c; font-size: 0.875rem; margin: 0;">Student</p>
-                        <h3 style="color: #323130; margin: 0.25rem 0;">{row['student_name']}</h3>
+                        <p style="color: #e0e0e0; font-size: 0.875rem; margin: 0;">Student</p>
+                        <h3 style="color: #ffffff; margin: 0.25rem 0;">{student_val}</h3>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -182,9 +197,9 @@ def student_summary_table(df: pd.DataFrame) -> None:
                 st.markdown(
                     f"""
                     <div class="fluent-card" style="text-align: center;">
-                        <p style="color: #605e5c; font-size: 0.75rem; margin: 0;">Classes</p>
-                        <p style="color: #0078d4; font-size: 1.5rem; font-weight: 700; margin: 0;">
-                            {int(row['total_classes'])}
+                        <p style="color: #e0e0e0; font-size: 0.75rem; margin: 0;">Classes</p>
+                        <p style="color: #4da6ff; font-size: 1.5rem; font-weight: 700; margin: 0;">
+                            {total_classes_val}
                         </p>
                     </div>
                     """,
@@ -195,9 +210,9 @@ def student_summary_table(df: pd.DataFrame) -> None:
                 st.markdown(
                     f"""
                     <div class="fluent-card" style="text-align: center;">
-                        <p style="color: #605e5c; font-size: 0.75rem; margin: 0;">Revenue</p>
-                        <p style="color: #107c10; font-size: 1.5rem; font-weight: 700; margin: 0;">
-                            R$ {row['total_revenue']:,.2f}
+                        <p style="color: #e0e0e0; font-size: 0.75rem; margin: 0;">Revenue</p>
+                        <p style="color: #4caf50; font-size: 1.5rem; font-weight: 700; margin: 0;">
+                            R$ {total_revenue_val:,.2f}
                         </p>
                     </div>
                     """,
@@ -225,7 +240,9 @@ def category_summary_table(df: pd.DataFrame) -> None:
 
     # Display as cards
     for idx, row in df.iterrows():
-        percentage = (row["total"] / total * 100) if total > 0 else 0
+        total_val = row["total"] if "total" in row and pd.notnull(row["total"]) else 0
+        category_val = row["category"] if "category" in row and pd.notnull(row["category"]) and row["category"] != "" else "-"
+        percentage = (total_val / total * 100) if total > 0 else 0
 
         with st.container():
             col1, col2, col3 = st.columns([3, 2, 2])
@@ -234,8 +251,8 @@ def category_summary_table(df: pd.DataFrame) -> None:
                 st.markdown(
                     f"""
                     <div class="fluent-card">
-                        <p style="color: #605e5c; font-size: 0.875rem; margin: 0;">Category</p>
-                        <h3 style="color: #323130; margin: 0.25rem 0;">{row['category']}</h3>
+                        <p style="color: #e0e0e0; font-size: 0.875rem; margin: 0;">Category</p>
+                        <h3 style="color: #ffffff; margin: 0.25rem 0;">{category_val}</h3>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -245,9 +262,9 @@ def category_summary_table(df: pd.DataFrame) -> None:
                 st.markdown(
                     f"""
                     <div class="fluent-card" style="text-align: center;">
-                        <p style="color: #605e5c; font-size: 0.75rem; margin: 0;">Amount</p>
-                        <p style="color: #d13438; font-size: 1.5rem; font-weight: 700; margin: 0;">
-                            R$ {row['total']:,.2f}
+                        <p style="color: #e0e0e0; font-size: 0.75rem; margin: 0;">Amount</p>
+                        <p style="color: #f44336; font-size: 1.5rem; font-weight: 700; margin: 0;">
+                            R$ {total_val:,.2f}
                         </p>
                     </div>
                     """,
@@ -258,8 +275,8 @@ def category_summary_table(df: pd.DataFrame) -> None:
                 st.markdown(
                     f"""
                     <div class="fluent-card" style="text-align: center;">
-                        <p style="color: #605e5c; font-size: 0.75rem; margin: 0;">Percentage</p>
-                        <p style="color: #0078d4; font-size: 1.5rem; font-weight: 700; margin: 0;">
+                        <p style="color: #e0e0e0; font-size: 0.75rem; margin: 0;">Percentage</p>
+                        <p style="color: #4da6ff; font-size: 1.5rem; font-weight: 700; margin: 0;">
                             {percentage:.1f}%
                         </p>
                     </div>

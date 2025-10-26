@@ -79,6 +79,11 @@ def get_fluent_theme() -> str:
         box-shadow: 0 6.4px 14.4px rgba(0, 0, 0, 0.5);
         border: 1px solid {colors['border']};
         transition: all 0.3s ease;
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
     }}
     
     .fluent-card:hover {{

@@ -83,34 +83,21 @@ def show_sidebar(expense_service: ExpenseService, class_service: ClassService):
 
         st.markdown("#### 💸 Finances")
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("💰 Add", use_container_width=True, key="nav_add_expense"):
-                st.session_state.page = "expenses"
-                st.rerun()
-
-        with col2:
-            if st.button("📊 Track", use_container_width=True, key="nav_track"):
-                st.session_state.page = "expenses"
-                st.rerun()
+        # Finance Add button - full width
+        if st.button("💰 Add Expense", use_container_width=True, key="nav_add_expense"):
+            st.session_state.page = "expenses"
+            st.rerun()
 
         st.markdown("#### 🎓 Classes")
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("📚 Add", use_container_width=True, key="nav_add_class"):
-                st.session_state.page = "classes"
-                st.rerun()
-
-        with col2:
-            if st.button("👥 View", use_container_width=True, key="nav_view_classes"):
-                st.session_state.page = "classes"
-                st.rerun()
+        # Classes Add button - full width
+        if st.button("📚 Add Class", use_container_width=True, key="nav_add_class"):
+            st.session_state.page = "classes"
+            st.rerun()
 
         st.markdown("#### 📈 Analytics")
 
+        # Analytics button - full width
         if st.button(
             "📊 View Analytics", use_container_width=True, key="nav_analytics"
         ):
