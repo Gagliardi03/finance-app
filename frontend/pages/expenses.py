@@ -2,6 +2,10 @@ import streamlit as st
 from backend import ExpenseService
 from typing import List, Dict
 from datetime import datetime
+from io import BytesIO
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 
 def show_expenses_page(expense_service: ExpenseService):
@@ -156,14 +160,14 @@ def _show_add_expenses_view(expense_service: ExpenseService):
         )
 
         if submitted:
-            # Validate inputs (location agora é opcional)
+            # Validate inputs
             if not category:
-                st.error("❌ Please fill in all fields!")
+                st.error("❌ Please fill in category field!")
             else:
                 # Add to temporary list
                 temp_expense = {
                     "category": category,
-                    "location": location,
+                    "location": location if location else "-",
                     "price": price,
                     "payment_method": payment_method,
                     "installments": installments,
@@ -270,37 +274,23 @@ def _show_add_expenses_view(expense_service: ExpenseService):
                     unsafe_allow_html=True,
                 )
 
-            with col6:
-                if st.button(
-                    "🗑️",
-                    key=f"del_temp_exp_{idx}",
-                    help="Remove from list",
-                    use_container_width=True,
-                ):
-                    st.session_state.temp_expenses.pop(idx)
-                    st.success("✅ Removed!")
-                    st.rerun()
-
             st.markdown("<br>", unsafe_allow_html=True)
 
         # Action buttons
-        st.divider()
-
-        col1, col2, col3 = st.columns([2, 2, 2])
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             # Calculate total
-            total = sum(exp["price"] for exp in st.session_state.temp_expenses)
+            total_amount = sum(e["price"] for e in st.session_state.temp_expenses)
             st.markdown(
                 f"""
-                <div style="padding: 16px; background: #2d2d2d; border-radius: 6px; 
-                            text-align: center; border-left: 4px solid #4da6ff; border: 1px solid #404040;">
-                    <p style="color: #e0e0e0; font-size: 12px; margin: 0; 
-                              text-transform: uppercase; letter-spacing: 0.5px;">
+                <div style="padding: 12px; background: #3d1b1b; border-radius: 4px; 
+                            border-left: 3px solid #f44336; text-align: center; border: 1px solid #f44336;">
+                    <p style="color: #e0e0e0; font-size: 12px; margin: 0;">
                         Total Amount
                     </p>
-                    <p style="color: #f44336; font-size: 24px; font-weight: 700; margin: 4px 0 0 0;">
-                        R$ {total:,.2f}
+                    <p style="color: #f44336; font-size: 20px; font-weight: 700; margin: 4px 0 0 0;">
+                        R$ {total_amount:,.2f}
                     </p>
                 </div>
                 """,
@@ -364,6 +354,126 @@ def _show_add_expenses_view(expense_service: ExpenseService):
         )
 
 
+def _create_formatted_expenses_xlsx(df: pd.DataFrame) -> BytesIO:
+    """
+    Create a formatted Excel file for expenses data.
+
+    Args:
+        df: DataFrame with expenses data
+
+    Returns:
+        BytesIO buffer with formatted Excel file
+    """
+    try:
+        # Create workbook and worksheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Expenses"
+
+        # Define styles
+        header_font = Font(bold=True, color="FFFFFF", size=12)
+        header_fill = PatternFill(
+            start_color="C00000", end_color="C00000", fill_type="solid"
+        )
+        header_alignment = Alignment(horizontal="center", vertical="center")
+
+        cell_alignment = Alignment(horizontal="left", vertical="center")
+        number_alignment = Alignment(horizontal="right", vertical="center")
+
+        border_style = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin"),
+        )
+
+        # Write title
+        ws.merge_cells("A1:G1")
+        title_cell = ws["A1"]
+        title_cell.value = "Expenses Report"
+        title_cell.font = Font(bold=True, size=16, color="7F0000")
+        title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # Write headers
+        headers = [
+            "ID",
+            "Date",
+            "Category",
+            "Location",
+            "Price (R$)",
+            "Payment Method",
+            "Installments",
+        ]
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=3, column=col_idx)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = border_style
+
+        # Write data
+        for row_idx, row_data in enumerate(df.itertuples(index=False), 4):
+            ws.cell(row=row_idx, column=1, value=row_data.id).alignment = cell_alignment
+            ws.cell(row=row_idx, column=2, value=str(row_data.date)[:10]).alignment = (
+                cell_alignment
+            )
+            ws.cell(row=row_idx, column=3, value=row_data.category).alignment = (
+                cell_alignment
+            )
+            ws.cell(row=row_idx, column=4, value=row_data.location).alignment = (
+                cell_alignment
+            )
+            ws.cell(row=row_idx, column=5, value=row_data.price).alignment = (
+                number_alignment
+            )
+            ws.cell(row=row_idx, column=5).number_format = "R$ #,##0.00"
+            ws.cell(row=row_idx, column=6, value=row_data.payment_method).alignment = (
+                cell_alignment
+            )
+            ws.cell(row=row_idx, column=7, value=row_data.installments).alignment = (
+                number_alignment
+            )
+
+            # Apply borders
+            for col_idx in range(1, 8):
+                ws.cell(row=row_idx, column=col_idx).border = border_style
+
+        # Add total row
+        total_row = len(df) + 4
+        ws.cell(row=total_row, column=1, value="TOTAL").font = Font(bold=True)
+        ws.cell(row=total_row, column=1).alignment = cell_alignment
+        ws.cell(row=total_row, column=5, value=df["price"].sum()).font = Font(bold=True)
+        ws.cell(row=total_row, column=5).alignment = number_alignment
+        ws.cell(row=total_row, column=5).number_format = "R$ #,##0.00"
+        ws.cell(row=total_row, column=5).fill = PatternFill(
+            start_color="E7E6E6", end_color="E7E6E6", fill_type="solid"
+        )
+
+        # Apply borders to total row
+        for col_idx in range(1, 8):
+            ws.cell(row=total_row, column=col_idx).border = border_style
+
+        # Adjust column widths
+        ws.column_dimensions["A"].width = 8
+        ws.column_dimensions["B"].width = 15
+        ws.column_dimensions["C"].width = 20
+        ws.column_dimensions["D"].width = 25
+        ws.column_dimensions["E"].width = 18
+        ws.column_dimensions["F"].width = 18
+        ws.column_dimensions["G"].width = 15
+
+        # Save to buffer
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        return buffer
+
+    except Exception as e:
+        raise Exception(f"Error creating formatted Excel: {e}")
+
+
 def _show_analytics_view(expense_service: ExpenseService):
     """
     Show analytics and visualizations for expenses.
@@ -389,30 +499,6 @@ def _show_analytics_view(expense_service: ExpenseService):
         """,
         unsafe_allow_html=True,
     )
-
-    # Botão de exclusão total com confirmação
-    if "show_delete_dialog" not in st.session_state:
-        st.session_state.show_delete_dialog = False
-    if st.button("🗑️ Delete All Expenses", type="primary", use_container_width=True):
-        st.session_state.show_delete_dialog = True
-    if st.session_state.show_delete_dialog:
-        st.warning(
-            "Are you sure you want to delete ALL expenses? This action cannot be undone!"
-        )
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("❌ Cancel", key="cancel_delete_all_expenses"):
-                st.session_state.show_delete_dialog = False
-        with col2:
-            if st.button("✅ Confirm Delete", key="confirm_delete_all_expenses"):
-                try:
-                    expense_service.delete_all_expenses()
-                    st.success("All expenses deleted!")
-                    st.session_state.show_delete_dialog = False
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error deleting expenses: {e}")
-    # ...existing code...
 
     try:
         # Get data
@@ -509,34 +595,64 @@ def _show_analytics_view(expense_service: ExpenseService):
         # Export section
         st.markdown("### 📥 Export Data")
 
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            # Export to CSV
-            csv = df_expenses.to_csv(index=False)
+        # Export formatted XLSX
+        try:
+            buffer = _create_formatted_expenses_xlsx(df_expenses)
             st.download_button(
-                label="📄 Download as CSV",
-                data=csv,
-                file_name="expenses.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
-
-        with col2:
-            # Export to Excel
-            from io import BytesIO
-
-            buffer = BytesIO()
-            df_expenses.to_excel(buffer, index=False, engine="openpyxl")
-            buffer.seek(0)
-
-            st.download_button(
-                label="📊 Download as Excel",
+                label="📊 Download Formatted Report (XLSX)",
                 data=buffer,
-                file_name="expenses.xlsx",
+                file_name=f"expenses_report_{datetime.now().strftime('%Y%m%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True,
             )
+        except Exception as e:
+            st.error(f"❌ Error creating XLSX: {e}")
+
+        st.divider()
+
+        # Delete All section
+        st.markdown("### 🗑️ Delete All Data")
+
+        # Delete all button with confirmation
+        if "show_delete_dialog_expenses" not in st.session_state:
+            st.session_state.show_delete_dialog_expenses = False
+
+        if not st.session_state.show_delete_dialog_expenses:
+            if st.button(
+                "🗑️ Delete All Expenses", type="secondary", use_container_width=True
+            ):
+                st.session_state.show_delete_dialog_expenses = True
+                st.rerun()
+
+        # Confirmation dialog
+        if st.session_state.show_delete_dialog_expenses:
+            st.warning(
+                "⚠️ **Are you sure you want to delete ALL expenses?** This action cannot be undone!"
+            )
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button(
+                    "❌ Cancel",
+                    key="cancel_delete_all_expenses",
+                    use_container_width=True,
+                ):
+                    st.session_state.show_delete_dialog_expenses = False
+                    st.rerun()
+            with col2:
+                if st.button(
+                    "✅ Confirm Delete",
+                    key="confirm_delete_all_expenses",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    try:
+                        expense_service.delete_all_expenses()
+                        st.success("✅ All expenses deleted successfully!")
+                        st.session_state.show_delete_dialog_expenses = False
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Error deleting expenses: {e}")
 
     except Exception as e:
         st.error(f"❌ Error loading analytics: {e}")
