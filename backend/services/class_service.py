@@ -78,6 +78,42 @@ class ClassService:
         except Exception as e:
             raise Exception(f"Error deleting class: {e}")
 
+    def clear_all_classes(self) -> bool:
+        """
+        Delete all class records from database.
+        WARNING: This action cannot be undone!
+
+        Returns:
+            True if successful
+
+        Raises:
+            Exception: If database operation fails
+        """
+        try:
+            # Get all classes
+            df = self.get_all_classes()
+
+            if df.empty:
+                return True
+
+            # Delete each class by ID
+            for class_id in df["id"]:
+                self.db.delete_class(class_id)
+
+            return True
+
+        except Exception as e:
+            raise Exception(f"Error clearing classes: {e}")
+
+    def delete_all_classes(self) -> bool:
+        """
+        Alias for clear_all_classes, for frontend compatibility.
+
+        Returns:
+            True if successful
+        """
+        return self.clear_all_classes()
+
     def get_all_classes(self) -> pd.DataFrame:
         """
         Retrieve all class records.

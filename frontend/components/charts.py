@@ -291,23 +291,4 @@ def comparison_chart(
         hovertemplate="<b>%{x}</b><br>R$ %{y:,.2f}<extra></extra>",
     )
 
-    # Add balance annotation
-    balance = revenue_total - expenses_total
-    balance_text = f"Balance: R$ {balance:,.2f}"
-    balance_color = "#107c10" if balance >= 0 else "#d13438"
-
-    fig.add_annotation(
-        text=balance_text,
-        xref="paper",
-        yref="paper",
-        x=0.5,
-        y=1.15,
-        showarrow=False,
-        font=dict(size=18, color=balance_color, family="Segoe UI"),
-        bgcolor="rgba(255,255,255,0.8)",
-        bordercolor=balance_color,
-        borderwidth=2,
-        borderpad=10,
-    )
-
     st.plotly_chart(fig, use_container_width=True)

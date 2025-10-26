@@ -239,41 +239,5 @@ def show_home_page(expense_service: ExpenseService, class_service: ClassService)
             else:
                 st.info("🔭 No class data yet. Start adding classes!")
 
-        # Financial Balance Summary
-        if expense_stats.total_spent > 0 or class_stats.total_revenue > 0:
-            balance = class_stats.total_revenue - expense_stats.total_spent
-            balance_color = "#4caf50" if balance >= 0 else "#f44336"
-            balance_bg = "#1b3d1b" if balance >= 0 else "#3d1b1b"
-            balance_icon = "✅" if balance >= 0 else "⚠️"
-            balance_status = "Positive" if balance >= 0 else "Negative"
-
-            st.markdown("<br>", unsafe_allow_html=True)
-
-            st.markdown(
-                f"""
-                <div class="fluent-card" style="background: {balance_bg} !important; 
-                                                border-left: 4px solid {balance_color};">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h4 style="color: {balance_color}; font-size: 16px; 
-                                       font-weight: 600; margin-bottom: 4px;">
-                                {balance_icon} Net Balance
-                            </h4>
-                            <p style="color: #e0e0e0; font-size: 12px; margin: 0;">
-                                {balance_status} Balance
-                            </p>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="color: {balance_color}; font-size: 28px; 
-                                      font-weight: 700; margin: 0;">
-                                R$ {abs(balance):,.2f}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
     except Exception as e:
         st.error(f"❌ Error loading dashboard data: {e}")

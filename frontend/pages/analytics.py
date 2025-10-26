@@ -58,7 +58,7 @@ def show_analytics_page(expense_service: ExpenseService, class_service: ClassSer
         if not has_expense_data and not has_class_data:
             st.markdown(
                 """
-                <div style="padding: 64px; background: #f5f5f5; border-radius: 8px; 
+                <div style="padding: 64px; background: #1a1a1a; border-radius: 8px; 
                             text-align: center; border: 2px dashed #c8c6c4;">
                     <div style="font-size: 64px; margin-bottom: 24px;">📊</div>
                     <h3 style="color: #605e5c; font-size: 20px; font-weight: 600; margin-bottom: 12px;">
@@ -367,7 +367,7 @@ def show_analytics_page(expense_service: ExpenseService, class_service: ClassSer
                     unsafe_allow_html=True,
                 )
 
-                col1, col2, col3 = st.columns(3)
+                col1, col2 = st.columns(2)
 
                 with col1:
                     st.markdown(
@@ -406,33 +406,6 @@ def show_analytics_page(expense_service: ExpenseService, class_service: ClassSer
                                 </p>
                                 <p style="color: #605e5c; font-size: 12px; margin: 0;">
                                     {class_stats.total_classes} classes
-                                </p>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-
-                with col3:
-                    balance = class_stats.total_revenue - expense_stats.total_spent
-                    balance_color = "#107c10" if balance >= 0 else "#d13438"
-                    balance_icon = "✅" if balance >= 0 else "⚠️"
-                    balance_status = "Positive" if balance >= 0 else "Negative"
-
-                    st.markdown(
-                        f"""
-                        <div class="fluent-card" style="border-left: 4px solid {balance_color};">
-                            <div style="text-align: center;">
-                                <div style="font-size: 32px; margin-bottom: 12px;">{balance_icon}</div>
-                                <p style="color: #605e5c; font-size: 12px; margin: 0; 
-                                          text-transform: uppercase; letter-spacing: 0.5px;">
-                                    Net Balance
-                                </p>
-                                <p style="color: {balance_color}; font-size: 28px; font-weight: 700; margin: 8px 0;">
-                                    R$ {abs(balance):,.2f}
-                                </p>
-                                <p style="color: #605e5c; font-size: 12px; margin: 0;">
-                                    {balance_status}
                                 </p>
                             </div>
                         </div>

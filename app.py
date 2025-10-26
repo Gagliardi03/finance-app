@@ -146,22 +146,6 @@ def show_sidebar(expense_service: ExpenseService, class_service: ClassService):
             """
             st.markdown(revenue_html, unsafe_allow_html=True)
 
-            # Balance
-            balance = class_stats.total_revenue - expense_stats.total_spent
-            balance_color = (
-                "rgba(16, 124, 16, 0.3)" if balance >= 0 else "rgba(209, 52, 56, 0.3)"
-            )
-
-            balance_html = f"""
-                <div style='background: {balance_color}; padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;'>
-                    <p style='color: white; font-size: 0.75rem; margin: 0;'>Balance</p>
-                    <p style='color: white; font-size: 1.25rem; font-weight: 700; margin: 0;'>
-                        R$ {abs(balance):,.2f}
-                    </p>
-                </div>
-            """
-            st.markdown(balance_html, unsafe_allow_html=True)
-
         except Exception:
             pass  # Silently fail for stats
 

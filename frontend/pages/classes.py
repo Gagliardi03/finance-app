@@ -2,6 +2,10 @@ import streamlit as st
 from backend import ClassService
 from typing import List, Dict
 from datetime import datetime
+from io import BytesIO
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 
 def show_classes_page(class_service: ClassService):
@@ -235,37 +239,23 @@ def _show_add_classes_view(class_service: ClassService):
                     unsafe_allow_html=True,
                 )
 
-            with col5:
-                if st.button(
-                    "🗑️",
-                    key=f"del_temp_cls_{idx}",
-                    help="Remove from list",
-                    use_container_width=True,
-                ):
-                    st.session_state.temp_classes.pop(idx)
-                    st.success("✅ Removed!")
-                    st.rerun()
-
             st.markdown("<br>", unsafe_allow_html=True)
 
         # Action buttons
-        st.divider()
-
-        col1, col2, col3 = st.columns([2, 2, 2])
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             # Calculate total
-            total = sum(cls["total"] for cls in st.session_state.temp_classes)
+            total_amount = sum(c["total"] for c in st.session_state.temp_classes)
             st.markdown(
                 f"""
-                <div style="padding: 16px; background: #2d2d2d; border-radius: 6px; 
-                            text-align: center; border-left: 4px solid #4caf50; border: 1px solid #404040;">
-                    <p style="color: #e0e0e0; font-size: 12px; margin: 0; 
-                              text-transform: uppercase; letter-spacing: 0.5px;">
-                        Total Revenue
+                <div style="padding: 12px; background: #1b3d1b; border-radius: 4px; 
+                            border-left: 3px solid #4caf50; text-align: center; border: 1px solid #4caf50;">
+                    <p style="color: #e0e0e0; font-size: 12px; margin: 0;">
+                        Total Amount
                     </p>
-                    <p style="color: #4caf50; font-size: 24px; font-weight: 700; margin: 4px 0 0 0;">
-                        R$ {total:,.2f}
+                    <p style="color: #4caf50; font-size: 20px; font-weight: 700; margin: 4px 0 0 0;">
+                        R$ {total_amount:,.2f}
                     </p>
                 </div>
                 """,
@@ -277,7 +267,7 @@ def _show_add_classes_view(class_service: ClassService):
                 "💾 Save All Classes",
                 use_container_width=True,
                 type="primary",
-                key="save_all_cls_btn",
+                key="save_all_classes_btn",
             ):
                 try:
                     # Save all classes to database
@@ -301,7 +291,9 @@ def _show_add_classes_view(class_service: ClassService):
 
         with col3:
             if st.button(
-                "🗑️ Clear All", use_container_width=True, key="clear_all_cls_btn"
+                "🗑️ Clear All",
+                use_container_width=True,
+                key="clear_all_classes_btn",
             ):
                 st.session_state.temp_classes = []
                 st.success("✅ List cleared!")
@@ -323,6 +315,251 @@ def _show_add_classes_view(class_service: ClassService):
             """,
             unsafe_allow_html=True,
         )
+
+
+def _create_formatted_classes_xlsx(df: pd.DataFrame) -> BytesIO:
+    """
+    Create a formatted Excel file for classes data.
+
+    Args:
+        df: DataFrame with classes data
+
+    Returns:
+        BytesIO buffer with formatted Excel file
+    """
+    try:
+        # Create workbook and worksheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Classes"
+
+        # Define styles
+        header_font = Font(bold=True, color="FFFFFF", size=12)
+        header_fill = PatternFill(
+            start_color="4472C4", end_color="4472C4", fill_type="solid"
+        )
+        header_alignment = Alignment(horizontal="center", vertical="center")
+
+        cell_alignment = Alignment(horizontal="left", vertical="center")
+        number_alignment = Alignment(horizontal="right", vertical="center")
+
+        border_style = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin"),
+        )
+
+        # Write title
+        ws.merge_cells("A1:F1")
+        title_cell = ws["A1"]
+        title_cell.value = "English Classes Report"
+        title_cell.font = Font(bold=True, size=16, color="1F4E78")
+        title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # Write headers
+        headers = [
+            "ID",
+            "Date",
+            "Student Name",
+            "Class Value (R$)",
+            "Quantity",
+            "Total (R$)",
+        ]
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=3, column=col_idx)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = border_style
+
+        # Write data
+        for row_idx, row_data in enumerate(df.itertuples(index=False), 4):
+            ws.cell(row=row_idx, column=1, value=row_data.id).alignment = cell_alignment
+            ws.cell(row=row_idx, column=2, value=str(row_data.date)[:10]).alignment = (
+                cell_alignment
+            )
+            ws.cell(row=row_idx, column=3, value=row_data.student_name).alignment = (
+                cell_alignment
+            )
+            ws.cell(row=row_idx, column=4, value=row_data.class_value).alignment = (
+                number_alignment
+            )
+            ws.cell(row=row_idx, column=4).number_format = "R$ #,##0.00"
+            ws.cell(row=row_idx, column=5, value=row_data.quantity).alignment = (
+                number_alignment
+            )
+            ws.cell(row=row_idx, column=6, value=row_data.total).alignment = (
+                number_alignment
+            )
+            ws.cell(row=row_idx, column=6).number_format = "R$ #,##0.00"
+
+            # Apply borders
+            for col_idx in range(1, 7):
+                ws.cell(row=row_idx, column=col_idx).border = border_style
+
+        # Add total row
+        total_row = len(df) + 4
+        ws.cell(row=total_row, column=1, value="TOTAL").font = Font(bold=True)
+        ws.cell(row=total_row, column=1).alignment = cell_alignment
+        ws.cell(row=total_row, column=6, value=df["total"].sum()).font = Font(bold=True)
+        ws.cell(row=total_row, column=6).alignment = number_alignment
+        ws.cell(row=total_row, column=6).number_format = "R$ #,##0.00"
+        ws.cell(row=total_row, column=6).fill = PatternFill(
+            start_color="E7E6E6", end_color="E7E6E6", fill_type="solid"
+        )
+
+        # Apply borders to total row
+        for col_idx in range(1, 7):
+            ws.cell(row=total_row, column=col_idx).border = border_style
+
+        # Adjust column widths
+        ws.column_dimensions["A"].width = 8
+        ws.column_dimensions["B"].width = 15
+        ws.column_dimensions["C"].width = 25
+        ws.column_dimensions["D"].width = 18
+        ws.column_dimensions["E"].width = 12
+        ws.column_dimensions["F"].width = 18
+
+        # Save to buffer
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        return buffer
+
+    except Exception as e:
+        raise Exception(f"Error creating formatted Excel: {e}")
+
+
+def _show_schedule_section(class_service: ClassService):
+    """
+    Display simple schedule/agenda for students.
+
+    Args:
+        class_service: Service for class operations
+    """
+    try:
+        # Initialize schedule in session state
+        if "student_schedule" not in st.session_state:
+            st.session_state.student_schedule = []
+
+        st.markdown("### 📅 Student Schedule")
+
+        # Add schedule entry form
+        with st.form("schedule_form", clear_on_submit=True):
+            col1, col2, col3 = st.columns([3, 2, 1])
+
+            with col1:
+                schedule_student = st.text_input(
+                    "Student Name", placeholder="e.g., John Smith"
+                )
+
+            with col2:
+                schedule_time = st.text_input(
+                    "Class Time", placeholder="e.g., Monday 10:00 AM"
+                )
+
+            with col3:
+                st.write("")
+                st.write("")
+                add_schedule = st.form_submit_button("➕ Add", use_container_width=True)
+
+            if add_schedule:
+                if schedule_student and schedule_time:
+                    st.session_state.student_schedule.append(
+                        {"student": schedule_student, "time": schedule_time}
+                    )
+                    st.success(f"✅ Added: {schedule_student} - {schedule_time}")
+                    st.rerun()
+                else:
+                    st.error("❌ Please fill in all fields!")
+
+        # Display schedule
+        if st.session_state.student_schedule:
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            edit_idx = st.session_state.get("edit_schedule_idx", None)
+            edit_data = st.session_state.get("edit_schedule_data", None)
+
+            for idx, schedule_item in enumerate(st.session_state.student_schedule):
+                col1, col2 = st.columns([5, 1])
+
+                with col1:
+                    st.markdown(
+                        f"""
+                        <div class=\"fluent-card\">
+                            <div style=\"display: flex; justify-content: space-between; align-items: center;\">
+                                <div>
+                                    <p style=\"color: #ffffff; font-size: 16px; font-weight: 600; margin: 0;\">
+                                        {schedule_item['student']}
+                                    </p>
+                                    <p style=\"color: #e0e0e0; font-size: 14px; margin: 4px 0 0 0;\">
+                                        🕐 {schedule_item['time']}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                with col2:
+                    if st.button(
+                        "🗑️",
+                        key=f"del_schedule_{idx}",
+                        help="Remove",
+                        use_container_width=True,
+                    ):
+                        st.session_state.student_schedule.pop(idx)
+                        st.rerun()
+
+                    # Botão de editar abaixo da lixeira
+                    if st.button(
+                        "✏️",
+                        key=f"edit_schedule_{idx}",
+                        help="Edit schedule entry",
+                        use_container_width=True,
+                    ):
+                        st.session_state.edit_schedule_idx = idx
+                        st.session_state.edit_schedule_data = schedule_item.copy()
+                        st.rerun()
+
+                # Formulário de edição inline
+                if edit_idx is not None and edit_data is not None and edit_idx == idx:
+                    with st.form(f"edit_schedule_form_{idx}", clear_on_submit=True):
+                        new_student = st.text_input(
+                            "Student Name", value=edit_data["student"]
+                        )
+                        new_time = st.text_input("Class Time", value=edit_data["time"])
+                        save = st.form_submit_button(
+                            "💾 Save", use_container_width=True
+                        )
+                        cancel = st.form_submit_button(
+                            "❌ Cancel", use_container_width=True
+                        )
+                        if save:
+                            st.session_state.student_schedule[idx] = {
+                                "student": new_student,
+                                "time": new_time,
+                            }
+                            st.session_state.edit_schedule_idx = None
+                            st.session_state.edit_schedule_data = None
+                            st.success("Schedule updated!")
+                            st.rerun()
+                        elif cancel:
+                            st.session_state.edit_schedule_idx = None
+                            st.session_state.edit_schedule_data = None
+                            st.info("Edit cancelled.")
+                            st.rerun()
+
+                st.markdown("<br>", unsafe_allow_html=True)
+        else:
+            st.info("📭 No schedule entries yet. Add your first entry above!")
+
+    except Exception as e:
+        st.error(f"❌ Error managing schedule: {e}")
 
 
 def _show_analytics_view(class_service: ClassService):
@@ -348,29 +585,6 @@ def _show_analytics_view(class_service: ClassService):
         """,
         unsafe_allow_html=True,
     )
-
-    # Botão de exclusão total com confirmação
-    if "show_delete_dialog_classes" not in st.session_state:
-        st.session_state.show_delete_dialog_classes = False
-    if st.button("🗑️ Delete All Classes", type="primary", use_container_width=True):
-        st.session_state.show_delete_dialog_classes = True
-    if st.session_state.show_delete_dialog_classes:
-        st.warning(
-            "Are you sure you want to delete ALL classes? This action cannot be undone!"
-        )
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("❌ Cancel", key="cancel_delete_all_classes"):
-                st.session_state.show_delete_dialog_classes = False
-        with col2:
-            if st.button("✅ Confirm Delete", key="confirm_delete_all_classes"):
-                try:
-                    class_service.delete_all_classes()
-                    st.success("All classes deleted!")
-                    st.session_state.show_delete_dialog_classes = False
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error deleting classes: {e}")
 
     try:
         # Get data
@@ -455,97 +669,72 @@ def _show_analytics_view(class_service: ClassService):
 
         st.divider()
 
-        # Top Students - DARK
-        st.markdown("### 🏆 Top Students")
-
-        df_top = class_service.get_top_students(limit=5)
-
-        if not df_top.empty:
-            for idx, row in df_top.iterrows():
-                rank = idx + 1
-                emoji = (
-                    "🥇"
-                    if rank == 1
-                    else "🥈" if rank == 2 else "🥉" if rank == 3 else "⭐"
-                )
-
-                st.markdown(
-                    f"""
-                    <div class="fluent-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <span style="font-size: 32px;">{emoji}</span>
-                                <div>
-                                    <p style="color: #e0e0e0; font-size: 12px; margin: 0; 
-                                              text-transform: uppercase; letter-spacing: 0.5px;">
-                                        Rank #{rank}
-                                    </p>
-                                    <p style="color: #ffffff; font-size: 18px; font-weight: 600; margin: 4px 0 0 0;">
-                                        {row['student_name']}
-                                    </p>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <p style="color: #e0e0e0; font-size: 12px; margin: 0;">
-                                    {int(row['total_classes'])} classes
-                                </p>
-                                <p style="color: #4caf50; font-size: 20px; font-weight: 700; margin: 4px 0 0 0;">
-                                    R$ {row['total_revenue']:,.2f}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-        else:
-            st.info("No student data available")
+        # Schedule section - REPLACE Top Students
+        _show_schedule_section(class_service)
 
         st.divider()
 
         # Export section
         st.markdown("### 📥 Export Data")
 
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            # Export to CSV
-            csv = df_classes.to_csv(index=False)
+        # Export formatted XLSX
+        try:
+            buffer = _create_formatted_classes_xlsx(df_classes)
             st.download_button(
-                label="📄 Download as CSV",
-                data=csv,
-                file_name="classes.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
-
-        with col2:
-            # Export to Excel
-            from io import BytesIO
-
-            buffer = BytesIO()
-            df_classes.to_excel(buffer, index=False, engine="openpyxl")
-            buffer.seek(0)
-
-            st.download_button(
-                label="📊 Download as Excel",
+                label="📊 Download Formatted Report (XLSX)",
                 data=buffer,
-                file_name="classes.xlsx",
+                file_name=f"classes_report_{datetime.now().strftime('%Y%m%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True,
             )
+        except Exception as e:
+            st.error(f"❌ Error creating XLSX: {e}")
 
-        with col3:
-            # Export student summary
-            csv_summary = df_students.to_csv(index=False)
+        st.divider()
 
-            st.download_button(
-                label="👥 Student Summary CSV",
-                data=csv_summary,
-                file_name="student_summary.csv",
-                mime="text/csv",
-                use_container_width=True,
+        # Delete All section
+        st.markdown("### 🗑️ Delete All Data")
+
+        # Delete all button with confirmation
+        if "show_delete_dialog_classes" not in st.session_state:
+            st.session_state.show_delete_dialog_classes = False
+
+        if not st.session_state.show_delete_dialog_classes:
+            if st.button(
+                "🗑️ Delete All Classes", type="secondary", use_container_width=True
+            ):
+                st.session_state.show_delete_dialog_classes = True
+                st.rerun()
+
+        # Confirmation dialog
+        if st.session_state.show_delete_dialog_classes:
+            st.warning(
+                "⚠️ **Are you sure you want to delete ALL classes?** This action cannot be undone!"
             )
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button(
+                    "❌ Cancel",
+                    key="cancel_delete_all_classes",
+                    use_container_width=True,
+                ):
+                    st.session_state.show_delete_dialog_classes = False
+                    st.rerun()
+            with col2:
+                if st.button(
+                    "✅ Confirm Delete",
+                    key="confirm_delete_all_classes",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    try:
+                        class_service.delete_all_classes()
+                        st.success("✅ All classes deleted successfully!")
+                        st.session_state.show_delete_dialog_classes = False
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Error deleting classes: {e}")
 
     except Exception as e:
         st.error(f"❌ Error loading analytics: {e}")
