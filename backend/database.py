@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from typing import List, Dict, Optional
 
-
+#Estou testando o nova atomação do comits
 class FinanceDB:
     """
     Simple database manager for financial transactions and English classes.

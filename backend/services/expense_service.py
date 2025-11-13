@@ -3,7 +3,7 @@ from typing import List, Dict, Optional
 from backend.database import FinanceDB
 from backend.models.schemas import Expense, ExpenseStats
 
-
+#?Teste para ver como funciona os commits automataticos
 class ExpenseService:
     """
     Service layer for expense operations.
