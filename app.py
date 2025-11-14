@@ -4,7 +4,7 @@ Modern financial tracking application with Fluent Design System.
 
 This is the main entry point of the application.
 """
-
+#Teste
 import streamlit as st
 from backend import FinanceDB, ExpenseService, ClassService
 from frontend import (

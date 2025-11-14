@@ -11,7 +11,7 @@ from frontend.components import (
     comparison_chart,
 )
 
-
+#Teste
 def _render_custom_tabs():
     """
     Render beautiful custom tab buttons with animations and hover effects.
