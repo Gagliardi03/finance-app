@@ -1,7 +1,7 @@
 import streamlit as st
 from typing import Optional, Callable
 
-
+#ESTOU TESNTANDO MEU GIT AUTOMATICO!
 def metric_card(
     title: str, value: str, delta: Optional[str] = None, icon: str = "📊"
 ) -> None:
